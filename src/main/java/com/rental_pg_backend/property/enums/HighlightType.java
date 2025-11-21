@@ -1,0 +1,19 @@
+package com.rental_pg_backend.property.enums;
+
+public enum HighlightType {
+    HIGH_SPEED_INTERNET_ACCESS,
+    WASHER_DRYER,
+    AIR_CONDITIONING,
+    HEATING,
+    SMOKE_FREE,
+    CABLE_READY,
+    SATELLITE_TV,
+    DOUBLE_VANITIES,
+    TUB_SHOWER,
+    INTERCOM,
+    SPRINKLER_SYSTEM,
+    RECENTLY_RENOVATED,
+    CLOSE_TO_TRANSIT,
+    GREAT_VIEW,
+    QUIET_NEIGHBORHOOD
+}
