@@ -47,4 +47,10 @@ public class PropertySearchDto {
 
     private String postalCode;
 
+    private Double currentLatitude;
+
+    private Double currentLongitude;
+
+    private Double searchRadiusKm;
+
 }

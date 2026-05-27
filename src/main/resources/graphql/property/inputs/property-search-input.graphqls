@@ -15,4 +15,7 @@ input PropertySearchInput {
   state: String
   country: String
   postalCode: String
+  currentLatitude: Float
+  currentLongitude: Float
+  searchRadiusKm: Float
 }

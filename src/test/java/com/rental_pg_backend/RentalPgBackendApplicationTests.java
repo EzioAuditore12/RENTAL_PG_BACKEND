@@ -8,6 +8,6 @@ class RentalPgBackendApplicationTests {
 
 	@Test
 	void contextLoads() {
-	}
+    }
 
 }

@@ -5,6 +5,8 @@ type Location {
   state: String
   country: String
   postalCode: String
+  latitude: Float
+  longitude: Float
   coordinates: Point
 }
 

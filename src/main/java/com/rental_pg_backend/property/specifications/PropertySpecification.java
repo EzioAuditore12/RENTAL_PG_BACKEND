@@ -27,6 +27,7 @@ public class PropertySpecification {
             List<Predicate> predicates = new ArrayList<>();
 
             addLocationPredicates(predicates, root, criteriaBuilder, propertySearchDto);
+            addGeoPredicates(predicates, root, criteriaBuilder, propertySearchDto);
             addNumericPredicates(predicates, root, criteriaBuilder, propertySearchDto);
             addBooleanPredicates(predicates, root, criteriaBuilder, propertySearchDto);
             addListPredicates(predicates, root, propertySearchDto);
@@ -63,6 +64,36 @@ public class PropertySpecification {
                     dto.getPostalCode()));
         }
     }
+
+        private static void addGeoPredicates(List<Predicate> predicates, Root<Property> root,
+            CriteriaBuilder criteriaBuilder, PropertySearchDto dto) {
+
+        if (dto.getCurrentLatitude() == null || dto.getCurrentLongitude() == null) {
+            return;
+        }
+
+        double radiusKm = dto.getSearchRadiusKm() == null || dto.getSearchRadiusKm() <= 0
+            ? 10.0
+            : dto.getSearchRadiusKm();
+
+        double latitudeDelta = radiusKm / 111.32;
+        double cosineLatitude = Math.cos(Math.toRadians(dto.getCurrentLatitude()));
+        double longitudeDelta = Math.abs(cosineLatitude) < 0.000001
+            ? latitudeDelta
+            : radiusKm / (111.32 * cosineLatitude);
+
+        var coordinates = root.get(LOCATION).get("coordinates");
+
+        predicates.add(criteriaBuilder.between(
+            criteriaBuilder.function("ST_Y", Double.class, coordinates),
+            dto.getCurrentLatitude() - latitudeDelta,
+            dto.getCurrentLatitude() + latitudeDelta));
+
+        predicates.add(criteriaBuilder.between(
+            criteriaBuilder.function("ST_X", Double.class, coordinates),
+            dto.getCurrentLongitude() - longitudeDelta,
+            dto.getCurrentLongitude() + longitudeDelta));
+        }
 
     private static void addNumericPredicates(List<Predicate> predicates, Root<Property> root,
             CriteriaBuilder cb, PropertySearchDto dto) {

@@ -46,7 +46,7 @@ public interface TenantMapper {
     }
 
     @Named("propertyTenantPaymentApplicationsToIds")
-    default Set<Long> mappropertyTenantPaymentApplicationsToIds(
+    default Set<Long> mapPropertyTenantPaymentApplicationsToIds(
             Set<PropertyTenantPaymentApplication> propertyTenantPaymentApplications) {
 
         return MapUtils.extractKeysFromSet(propertyTenantPaymentApplications, PropertyTenantPaymentApplication::getId);
