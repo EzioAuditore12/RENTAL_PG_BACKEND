@@ -53,6 +53,10 @@ public class LocationService {
         return locationMapper.toDto(location);
     }
 
+    public Point getCoordinatesPoint(Double longitude, Double latitude) {
+        return convertToCoordinates(longitude, latitude);
+    }
+
     private Point convertToCoordinates(Double longitude, Double latitude) {
 
         GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);

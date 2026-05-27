@@ -47,7 +47,7 @@ public class PropertyService {
     @Transactional
     public PropertyDto initializeProperty(UUID managerId, CreatePropertyDto createPropertyDto) {
 
-        NominatimApiResponseDto nominatimApiResponseDto = buildLocationWithNominatim(
+        NominatimApiResponseDto nominatimApiResponseDto = this.buildLocationWithNominatim(
                 createPropertyDto.getLatitude(),
                 createPropertyDto.getLongitude());
 
@@ -72,7 +72,7 @@ public class PropertyService {
 
         Property savedProperty = propertyRepository.save(property);
 
-        InsertLocationDto insertLocationDto = buildLocation(createPropertyDto, nominatimApiResponseDto);
+        InsertLocationDto insertLocationDto = this.buildLocation(createPropertyDto, nominatimApiResponseDto);
 
         Location savedLocation = locationService.insertSavedLocation(insertLocationDto, savedProperty);
 
@@ -107,7 +107,7 @@ public class PropertyService {
     }
 
     private InsertLocationDto buildLocation(CreatePropertyDto createPropertyDto,
-            NominatimApiResponseDto nominatimApiResponseDto) {
+                                            NominatimApiResponseDto nominatimApiResponseDto) {
 
         return InsertLocationDto.builder()
                 .address(createPropertyDto.getAddress())
@@ -120,7 +120,7 @@ public class PropertyService {
                 .build();
     }
 
-    private NominatimApiResponseDto buildLocationWithNominatim(Double latitude, Double longitude) {
+    public NominatimApiResponseDto buildLocationWithNominatim(Double latitude, Double longitude) {
 
         NominatimApiResponseDto nomantimApiResponseDto = NominatimUtils.getReverseGeoLocationDetails(latitude,
                 longitude);

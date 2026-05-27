@@ -6,6 +6,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import org.hibernate.annotations.CreationTimestamp;
 
 import com.rental_pg_backend.application.entities.Application;
@@ -25,16 +30,13 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class Property {
 
     @Id
@@ -47,47 +49,45 @@ public class Property {
     @Column(length = 250, nullable = false)
     private String description;
 
-    @Column(nullable = false)
+    @Builder.Default
     private Double pricePerMonth = 0.0;
 
-    @Column(nullable = false)
+    @Builder.Default
     private Double securityDeposit = 0.0;
 
-    @Column(nullable = false)
+    @Builder.Default
     private List<String> photoUrls = new ArrayList<>();
 
-    @Column(nullable = false)
     private List<AmenityType> amenities;
 
-    @Column(nullable = false)
     private List<HighlightType> highlights;
 
     private PropertyType propertyType;
 
-    @Column(nullable = false)
+    @Builder.Default
     private boolean petAllowed = false;
 
-    @Column(nullable = false)
+    @Builder.Default
     private boolean parkingIncluded = false;
 
-    @Column(nullable = false)
+    @Builder.Default
     private Integer beds = 0;
 
-    @Column(nullable = false)
+    @Builder.Default
     private Integer baths = 0;
 
-    @Column(nullable = false)
+    @Builder.Default
     private Double squareFeet = 0.0;
+
+    @Builder.Default
+    private Double averageRatings = 0.0;
+
+    @Builder.Default
+    private Double numberOfRatings = 0.0;
 
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime postedDate;
-
-    @Column(nullable = false)
-    private Double averageRatings = 0.0;
-
-    @Column(nullable = false)
-    private Double numberOfRatings = 0.0;
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "location_id", referencedColumnName = "id")
