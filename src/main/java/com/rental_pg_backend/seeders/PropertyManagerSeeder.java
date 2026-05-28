@@ -2,21 +2,22 @@ package com.rental_pg_backend.seeders;
 
 import java.util.*;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rental_pg_backend.property.dto.location.InsertLocationDto;
 import com.rental_pg_backend.property.dto.location.LocationDto;
-import com.rental_pg_backend.property.dto.nominatim.NominatimApiResponseDto;
 import com.rental_pg_backend.property.entities.Location;
 import com.rental_pg_backend.property.repositories.LocationRepository;
 import com.rental_pg_backend.property.services.LocationService;
 import com.rental_pg_backend.property.services.PropertyService;
 import com.rental_pg_backend.seeders.dto.SeederPlaceDto;
-import org.locationtech.jts.geom.Point;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.http.HttpStatus;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.rental_pg_backend.manager.entities.Manager;
@@ -28,23 +29,24 @@ import com.rental_pg_backend.property.enums.PropertyType;
 import com.rental_pg_backend.property.repositories.PropertyRepository;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.server.ResponseStatusException;
 
 @Component
 @RequiredArgsConstructor
 public class PropertyManagerSeeder implements CommandLineRunner {
 
     private final ManagerRepository managerRepository;
-
     private final PropertyService propertyService;
     private final PropertyRepository propertyRepository;
-
     private final LocationService locationService;
     private final LocationRepository locationRepository;
 
+    // Self-injection to allow Spring to proxy our batch transaction calls
+    @Autowired
+    @Lazy
+    private PropertyManagerSeeder self;
+
     @Value("${app.seed.enabled.manager.property}")
     private boolean seedEnabled;
-
 
     @Override
     @Transactional
@@ -54,40 +56,61 @@ public class PropertyManagerSeeder implements CommandLineRunner {
         }
         List<Manager> managers = managerRepository.findAll();
         if (managers.isEmpty()) return;
-        seedProperties(managers);
-        System.out.println("100 properties seeded");
+
+        this.seedProperties(managers);
+        System.out.println("Properties seeded successfully in chunks.");
     }
 
     @Transactional
     protected void seedProperties(List<Manager> managers) {
         Random random = new Random();
-        List<SeederPlaceDto> places = loadPlacesFromJson();
-        for (int i = 1; i <= 100; i++) {
-            seedSingleProperty(i, managers, random, places);
-            try {
-                Thread.sleep(1200); // 1.2 seconds delay to avoid API rate limit
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonParser parser = mapper.getFactory().createParser(getClass().getResourceAsStream("/data/indian_places.json"));
+
+            if (parser.nextToken() == JsonToken.START_ARRAY) {
+                List<SeederPlaceDto> batch = new ArrayList<>();
+                int totalProcessed = 0;
+
+                while (parser.nextToken() == JsonToken.START_OBJECT) {
+                    SeederPlaceDto place = mapper.readValue(parser, SeederPlaceDto.class);
+                    batch.add(place);
+
+                    if (batch.size() == 100) {
+                        // Call via 'self' to trigger the REQUIRES_NEW transaction
+                        self.processBatch(batch, managers, random, totalProcessed);
+                        totalProcessed += 100;
+                        System.out.println(totalProcessed + " properties seeded...");
+                        batch.clear();
+                    }
+                }
+
+                // Process the final batch if it isn't exactly divisible by 100
+                if (!batch.isEmpty()) {
+                    self.processBatch(batch, managers, random, totalProcessed);
+                    totalProcessed += batch.size();
+                    System.out.println(totalProcessed + " properties seeded...");
+                }
             }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to stream places JSON", e);
+        }
+    }
+
+    // Requires a new transaction to commit this specific batch of 100
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void processBatch(List<SeederPlaceDto> batch, List<Manager> managers, Random random, int offset) {
+        for (int i = 0; i < batch.size(); i++) {
+            seedSingleProperty(offset + i + 1, managers, random, batch.get(i));
         }
     }
 
     @Transactional
-    protected void seedSingleProperty(int i,
-                                      List<Manager> managers,
-                                      Random random,
-                                      List<SeederPlaceDto> places) {
-        SeederPlaceDto place = places.get((i - 1) % places.size());
-
+    protected void seedSingleProperty(int i, List<Manager> managers, Random random, SeederPlaceDto place) {
         double latitude = place.getLatitude();
         double longitude = place.getLongitude();
 
-        NominatimApiResponseDto nominatimApiResponseDto = propertyService.buildLocationWithNominatim(latitude, longitude);
-        if (Objects.isNull(nominatimApiResponseDto)) return;
-
-        LocationDto locationDto = locationService.findLocationByLongitudeAndLatitude(
-                Double.parseDouble(nominatimApiResponseDto.getLon()),
-                Double.parseDouble(nominatimApiResponseDto.getLat()));
+        LocationDto locationDto = locationService.findLocationByLongitudeAndLatitude(longitude, latitude);
         if (Objects.nonNull(locationDto)) return;
 
         // 1. Pick 2 to 4 random images
@@ -103,7 +126,6 @@ public class PropertyManagerSeeder implements CommandLineRunner {
         // 4. Pick a random property type
         PropertyType randomPropertyType = PropertyType.values()[random.nextInt(PropertyType.values().length)];
 
-
         String propertyName = "Luxury PG " + i;
         Property property = Property.builder()
                 .name(propertyName)
@@ -115,10 +137,10 @@ public class PropertyManagerSeeder implements CommandLineRunner {
                 .squareFeet(200.0 + random.nextInt(1000))
                 .petAllowed(random.nextBoolean())
                 .parkingIncluded(random.nextBoolean())
-                .propertyType(randomPropertyType) // Applied random type
-                .amenities(randomAmenities)       // Applied random amenities
-                .highlights(randomHighlights)     // Applied random highlights
-                .photoUrls(uploadedImageUrls)     // Applied random images
+                .propertyType(randomPropertyType)
+                .amenities(randomAmenities)
+                .highlights(randomHighlights)
+                .photoUrls(uploadedImageUrls)
                 .build();
         property.setManager(managers.get(random.nextInt(managers.size())));
 
@@ -129,28 +151,14 @@ public class PropertyManagerSeeder implements CommandLineRunner {
                 .city(place.getCity())
                 .state(place.getState())
                 .postalCode(place.getPostalCode())
-                .longitude(Double.parseDouble(nominatimApiResponseDto.getLon()))
-                .latitude(Double.parseDouble(nominatimApiResponseDto.getLat()))
+                .country("India")
+                .longitude(longitude)
+                .latitude(latitude)
                 .build();
 
         Location savedLocation = locationService.insertSavedLocation(insertLocationDto, savedProperty);
         savedProperty.setLocation(savedLocation);
         propertyRepository.save(savedProperty);
-    }
-
-    private List<SeederPlaceDto> loadPlacesFromJson() {
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-
-            return objectMapper.readValue(
-                    getClass().getResourceAsStream("/data/uttarakhand_places.json"),
-                    new TypeReference<List<SeederPlaceDto>>() {
-                    }
-            );
-
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to load places JSON", e);
-        }
     }
 
     private List<String> getRandomImages(int count, Random random) {
@@ -165,7 +173,6 @@ public class PropertyManagerSeeder implements CommandLineRunner {
         return enumValues.subList(0, Math.min(count, enumValues.size()));
     }
 
-    // A pool of high-quality property images to choose from randomly
     private static final List<String> IMAGE_POOL = List.of(
             "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85",
             "https://images.unsplash.com/photo-1494526585095-c41746248156",

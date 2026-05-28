@@ -13,7 +13,8 @@ import lombok.Setter;
 
 @Entity
 @Table(
-        indexes = {@Index(name = "idx_location_city", columnList = "city"),
+        indexes = {
+            @Index(name = "idx_location_city", columnList = "city"),
                 @Index(name = "idx_location_state", columnList = "state"),
                 @Index(name = "idx_location_country", columnList = "country"),
                 @Index(name = "idx_location_postal_code", columnList = "postalCode")
@@ -49,7 +50,7 @@ public class Location {
     @Column(length = 20, nullable = false)
     private String postalCode;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "geometry(Point,4326)")
     private Point coordinates;
 
 }
