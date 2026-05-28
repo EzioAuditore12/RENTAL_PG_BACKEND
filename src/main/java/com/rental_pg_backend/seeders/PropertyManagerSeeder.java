@@ -2,6 +2,8 @@ package com.rental_pg_backend.seeders;
 
 import java.util.*;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rental_pg_backend.property.dto.location.InsertLocationDto;
 import com.rental_pg_backend.property.dto.location.LocationDto;
 import com.rental_pg_backend.property.dto.nominatim.NominatimApiResponseDto;
@@ -9,6 +11,7 @@ import com.rental_pg_backend.property.entities.Location;
 import com.rental_pg_backend.property.repositories.LocationRepository;
 import com.rental_pg_backend.property.services.LocationService;
 import com.rental_pg_backend.property.services.PropertyService;
+import com.rental_pg_backend.seeders.dto.SeederPlaceDto;
 import org.locationtech.jts.geom.Point;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -58,10 +61,9 @@ public class PropertyManagerSeeder implements CommandLineRunner {
     @Transactional
     protected void seedProperties(List<Manager> managers) {
         Random random = new Random();
-        List<String> places = getPlaces();
-        List<Double[]> coordinates = getCoordinates();
+        List<SeederPlaceDto> places = loadPlacesFromJson();
         for (int i = 1; i <= 100; i++) {
-            seedSingleProperty(i, managers, random, places, coordinates);
+            seedSingleProperty(i, managers, random, places);
             try {
                 Thread.sleep(1200); // 1.2 seconds delay to avoid API rate limit
             } catch (InterruptedException e) {
@@ -71,10 +73,14 @@ public class PropertyManagerSeeder implements CommandLineRunner {
     }
 
     @Transactional
-    protected void seedSingleProperty(int i, List<Manager> managers, Random random, List<String> places, List<Double[]> coordinates) {
-        Double[] baseCord = coordinates.get((i - 1) % coordinates.size());
-        double latitude = baseCord[0];
-        double longitude = baseCord[1];
+    protected void seedSingleProperty(int i,
+                                      List<Manager> managers,
+                                      Random random,
+                                      List<SeederPlaceDto> places) {
+        SeederPlaceDto place = places.get((i - 1) % places.size());
+
+        double latitude = place.getLatitude();
+        double longitude = place.getLongitude();
 
         NominatimApiResponseDto nominatimApiResponseDto = propertyService.buildLocationWithNominatim(latitude, longitude);
         if (Objects.isNull(nominatimApiResponseDto)) return;
@@ -119,11 +125,10 @@ public class PropertyManagerSeeder implements CommandLineRunner {
         Property savedProperty = propertyRepository.save(property);
 
         InsertLocationDto insertLocationDto = InsertLocationDto.builder()
-                .address(places.get((i - 1) % places.size()))
-                .city("Dehradun")
-                .state("Uttarakhand")
-                .country("India")
-                .postalCode("248001")
+                .address(place.getPlace())
+                .city(place.getCity())
+                .state(place.getState())
+                .postalCode(place.getPostalCode())
                 .longitude(Double.parseDouble(nominatimApiResponseDto.getLon()))
                 .latitude(Double.parseDouble(nominatimApiResponseDto.getLat()))
                 .build();
@@ -133,68 +138,19 @@ public class PropertyManagerSeeder implements CommandLineRunner {
         propertyRepository.save(savedProperty);
     }
 
-    private List<String> getPlaces() {
-        return List.of(
-                "Rajpur Road", "Clock Tower", "Prem Nagar", "ISBT", "Jakhan",
-                "Ballupur", "Patel Nagar", "Raipur", "Clement Town", "GMS Road",
-                "Vasant Vihar", "Dalanwala", "Indira Nagar", "Kaulagarh", "Dharampur",
-                "Karanpur", "Nehru Colony", "Race Course", "Majra", "Subhash Nagar",
-                "Sahastradhara Road", "Garhi Cantt", "Hathibarkala", "Canal Road", "Aamwala",
-                "Chukkuwala", "Kishanpur", "Turner Road", "Transport Nagar", "Sewla Kalan",
-                "Banjarawala", "Mothrowala", "Ajabpur Kalan", "Pondha", "Selaqui",
-                "Sudhowala", "Bidholi", "Jhajra", "Makkawala", "Gujrara",
-                "Tunwala", "Balawala", "Miyawala", "Harrawala", "Kuanwala",
-                "Nawada", "Nathanpur", "Jogiwala", "Brahmanwala", "Niranjanpur",
-                "Kargi", "Bhandari Bagh", "Rest Camp", "Araghar", "D.L. Road",
-                "Tyagi Road", "Gandhi Road", "Haridwar Road", "Saharanpur Road", "EC Road",
-                "Chakrata Road", "Shimla Bypass", "Neshvilla Road", "Kanwali Road", "Railway Station",
-                "Panditwari", "Vihar Colony", "Vijay Colony", "Dhoran Khas", "Govindgarh",
-                "Khurbura", "Lakkhi Bagh", "Machhi Bazar", "Malsi", "Manduwala",
-                "Mehuwala", "Mohkampur", "Nalapani", "Nanda Ki Chowki", "Naugaon",
-                "Niranjanpur Mandi", "Pacific Mall Area", "Paltan Bazaar", "Phulsani", "Purkul",
-                "Salawala", "Sayedwala", "Industrial Area", "Shastri Nagar", "Sheeshambada",
-                "Suman Nagar", "Tarla Adhoiwala", "THDC Colony", "Vani Vihar", "Vasant Vihar Phase 1",
-                "Vasant Vihar Phase 2", "Vidyut Vihar", "Wadia Institute Area", "Yamuna Colony", "Johri Village"
-        );
-    }
+    private List<SeederPlaceDto> loadPlacesFromJson() {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
 
-    private List<Double[]> getCoordinates() {
-        return List.of(
-                new Double[]{30.3255, 78.0436}, new Double[]{30.3243, 78.0418}, new Double[]{30.3348, 77.9501},
-                new Double[]{30.2881, 78.0402}, new Double[]{30.3572, 78.0704}, new Double[]{30.3300, 78.0160},
-                new Double[]{30.3060, 78.0150}, new Double[]{30.3161, 78.0899}, new Double[]{30.2670, 78.0050},
-                new Double[]{30.3180, 78.0110}, new Double[]{30.3280, 77.9950}, new Double[]{30.3200, 78.0550},
-                new Double[]{30.3350, 78.0000}, new Double[]{30.3400, 78.0100}, new Double[]{30.3050, 78.0450},
-                new Double[]{30.3250, 78.0550}, new Double[]{30.2950, 78.0500}, new Double[]{30.3100, 78.0400},
-                new Double[]{30.2850, 78.0200}, new Double[]{30.2750, 78.0150}, new Double[]{30.3500, 78.0800},
-                new Double[]{30.3450, 78.0300}, new Double[]{30.3400, 78.0450}, new Double[]{30.3650, 78.0750},
-                new Double[]{30.3400, 78.0700}, new Double[]{30.3250, 78.0350}, new Double[]{30.3600, 78.0750},
-                new Double[]{30.2750, 78.0250}, new Double[]{30.2800, 78.0100}, new Double[]{30.2900, 78.0150},
-                new Double[]{30.2700, 78.0400}, new Double[]{30.2650, 78.0500}, new Double[]{30.2950, 78.0400},
-                new Double[]{30.3600, 77.9300}, new Double[]{30.3650, 77.8500}, new Double[]{30.3450, 77.9200},
-                new Double[]{30.4050, 77.9650}, new Double[]{30.3350, 77.9000}, new Double[]{30.3800, 78.0650},
-                new Double[]{30.3450, 78.0900}, new Double[]{30.2900, 78.1100}, new Double[]{30.2750, 78.1150},
-                new Double[]{30.2800, 78.0950}, new Double[]{30.2650, 78.1200}, new Double[]{30.2550, 78.1300},
-                new Double[]{30.2950, 78.0750}, new Double[]{30.3000, 78.0850}, new Double[]{30.2900, 78.0650},
-                new Double[]{30.2950, 78.0250}, new Double[]{30.3050, 78.0200}, new Double[]{30.2850, 78.0350},
-                new Double[]{30.3150, 78.0350}, new Double[]{30.3100, 78.0500}, new Double[]{30.3050, 78.0550},
-                new Double[]{30.3300, 78.0500}, new Double[]{30.3150, 78.0450}, new Double[]{30.3200, 78.0400},
-                new Double[]{30.3050, 78.0600}, new Double[]{30.3000, 78.0300}, new Double[]{30.3250, 78.0500},
-                new Double[]{30.3300, 78.0250}, new Double[]{30.2950, 77.9800}, new Double[]{30.3350, 78.0400},
-                new Double[]{30.3100, 78.0150}, new Double[]{30.3150, 78.0300}, new Double[]{30.3350, 77.9800},
-                new Double[]{30.3400, 78.0200}, new Double[]{30.3550, 78.0450}, new Double[]{30.3650, 78.0850},
-                new Double[]{30.3250, 78.0200}, new Double[]{30.3200, 78.0350}, new Double[]{30.3150, 78.0400},
-                new Double[]{30.3200, 78.0450}, new Double[]{30.3850, 78.0750}, new Double[]{30.3700, 77.9100},
-                new Double[]{30.3050, 78.0000}, new Double[]{30.2900, 78.0600}, new Double[]{30.3300, 78.0900},
-                new Double[]{30.3450, 77.9600}, new Double[]{30.3900, 77.9400}, new Double[]{30.3000, 78.0250},
-                new Double[]{30.3600, 78.0700}, new Double[]{30.3250, 78.0400}, new Double[]{30.3800, 77.9800},
-                new Double[]{30.3950, 78.0700}, new Double[]{30.3350, 78.0550}, new Double[]{30.3250, 77.9900},
-                new Double[]{30.3600, 77.8600}, new Double[]{30.3100, 78.0700}, new Double[]{30.3700, 77.8300},
-                new Double[]{30.3000, 78.0500}, new Double[]{30.3350, 78.0650}, new Double[]{30.2800, 78.0300},
-                new Double[]{30.3050, 78.0800}, new Double[]{30.3250, 77.9950}, new Double[]{30.3200, 77.9900},
-                new Double[]{30.3300, 78.0000}, new Double[]{30.3150, 78.0100}, new Double[]{30.3300, 78.0350},
-                new Double[]{30.3750, 78.0850}
-        );
+            return objectMapper.readValue(
+                    getClass().getResourceAsStream("/data/uttarakhand_places.json"),
+                    new TypeReference<List<SeederPlaceDto>>() {
+                    }
+            );
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load places JSON", e);
+        }
     }
 
     private List<String> getRandomImages(int count, Random random) {

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
@@ -19,19 +20,18 @@ import com.rental_pg_backend.property.enums.AmenityType;
 import com.rental_pg_backend.property.enums.HighlightType;
 import com.rental_pg_backend.property.enums.PropertyType;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
-
 @Entity
+@Table(
+        indexes = {
+                @Index(name = "idx_property_name", columnList = "name"),
+                @Index(name = "idx_property_price", columnList = "pricePerMonth"),
+                @Index(name = "idx_property_type", columnList = "propertyType"),
+                @Index(name = "idx_property_posted_date", columnList = "postedDate"),
+                @Index(name = "idx_property_manager", columnList = "property_manager_id"),
+                @Index(name = "idx_property_pet_allowed", columnList = "petAllowed"),
+                @Index(name = "idx_property_parking", columnList = "parkingIncluded")
+        }
+)
 @Getter
 @Setter
 @AllArgsConstructor

@@ -2,14 +2,9 @@ package com.rental_pg_backend.property.entities;
 
 import java.util.UUID;
 
+import jakarta.persistence.*;
 import org.locationtech.jts.geom.Point;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.MapsId;
-import jakarta.persistence.OneToOne;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,6 +12,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
+@Table(
+        indexes = {@Index(name = "idx_location_city", columnList = "city"),
+                @Index(name = "idx_location_state", columnList = "state"),
+                @Index(name = "idx_location_country", columnList = "country"),
+                @Index(name = "idx_location_postal_code", columnList = "postalCode")
+        }
+)
 @Getter
 @Setter
 @AllArgsConstructor
@@ -47,7 +49,7 @@ public class Location {
     @Column(length = 20, nullable = false)
     private String postalCode;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private Point coordinates;
 
 }

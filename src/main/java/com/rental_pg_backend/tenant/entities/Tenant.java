@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.UUID;
 
+import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -11,13 +12,6 @@ import com.rental_pg_backend.application.entities.Application;
 import com.rental_pg_backend.payment.entities.Payment;
 import com.rental_pg_backend.property.entities.PropertyTenantPaymentApplication;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -28,6 +22,12 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@Table(
+        indexes = {
+                @Index(name = "idx_tenant_created_at", columnList = "createdAt"),
+                @Index(name = "idx_tenant_updated_at", columnList = "updatedAt")
+        }
+)
 public class Tenant {
 
     @Id

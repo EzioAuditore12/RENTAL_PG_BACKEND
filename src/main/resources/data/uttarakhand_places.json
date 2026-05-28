@@ -1,0 +1,26 @@
+[
+  {
+    "place": "Rajpur Road",
+    "city": "Dehradun",
+    "state": "Uttarakhand",
+    "postalCode": "248001",
+    "latitude": 30.3255,
+    "longitude": 78.0436
+  },
+  {
+    "place": "Har Ki Pauri",
+    "city": "Haridwar",
+    "state": "Uttarakhand",
+    "postalCode": "249401",
+    "latitude": 29.9457,
+    "longitude": 78.1642
+  },
+  {
+    "place": "Mall Road",
+    "city": "Nainital",
+    "state": "Uttarakhand",
+    "postalCode": "263001",
+    "latitude": 29.3803,
+    "longitude": 79.4636
+  }
+]

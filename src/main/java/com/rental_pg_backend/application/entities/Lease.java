@@ -3,15 +3,9 @@ package com.rental_pg_backend.application.entities;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,6 +13,12 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
+@Table(
+        indexes = {
+                @Index(name = "idx_lease_application", columnList = "application_id"),
+                @Index(name = "idx_lease_end_date", columnList = "endDate")
+        }
+)
 @Getter
 @Setter
 @AllArgsConstructor

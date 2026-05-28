@@ -4,14 +4,7 @@ import com.rental_pg_backend.application.entities.Application;
 import com.rental_pg_backend.payment.entities.Payment;
 import com.rental_pg_backend.tenant.entities.Tenant;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,6 +12,12 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
+@Table(
+        indexes = {
+                @Index(name = "idx_ptpa_tenant", columnList = "tenant_id"),
+                @Index(name = "idx_ptpa_property", columnList = "property_id")
+        }
+)
 @Getter
 @Setter
 @AllArgsConstructor
