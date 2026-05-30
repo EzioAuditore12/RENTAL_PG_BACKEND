@@ -25,6 +25,11 @@ import com.rental_pg_backend.property.dto.property.PropertyDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.data.domain.Page;
+import com.rental_pg_backend.common.dto.PaginationDto;
+import com.rental_pg_backend.property.dto.property.PropertyPageDto;
+import com.rental_pg_backend.property.services.PropertyService;
+
 @Controller
 @RequiredArgsConstructor
 @Slf4j
@@ -32,6 +37,7 @@ public class ManagerResolver {
 
     private final ManagerService managerService;
     private final ManagerMapper managerMapper;
+    private final PropertyService propertyService;
 
     private final ApplicationService applicationService;
 
@@ -57,14 +63,25 @@ public class ManagerResolver {
 
     @AuthenticatedManager
     @QueryMapping
-    public CompletableFuture<List<PropertyDto>> getManagedProperties(DataLoader<UUID, PropertyDto> dataLoader) {
+    public PropertyPageDto getManagedProperties(
+            @Argument Integer page,
+            @Argument Integer size) {
 
         UUID managerId = AuthUtils.getAuthenticatedUserId();
 
-        Set<UUID> propertyIds = managerService.getManagedPropertyIds(managerId);
+        Page<PropertyDto> propertyPage = propertyService.getManagedProperties(managerId, page != null ? page : 0, size != null ? size : 10);
 
-        return dataLoader.loadMany(new ArrayList<>(propertyIds));
+        PaginationDto paginationDto = PaginationDto.builder()
+                .currentPage(propertyPage.getNumber())
+                .totalPages(propertyPage.getTotalPages())
+                .totalElements((int) propertyPage.getTotalElements())
+                .size(propertyPage.getSize())
+                .build();
 
+        return PropertyPageDto.builder()
+                .content(propertyPage.getContent())
+                .pagination(paginationDto)
+                .build();
     }
 
     @AuthenticatedManager

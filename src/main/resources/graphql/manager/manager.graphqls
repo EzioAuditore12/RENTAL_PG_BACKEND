@@ -11,7 +11,7 @@ type Manager {
 extend type Query {
   getManager(id: ID!): Manager
   getAuthenticatedManager: Manager
-  getManagedProperties: [Property]
+  getManagedProperties(page: Int = 0, size: Int = 10): PropertyPage
 }
 
 extend type Mutation {

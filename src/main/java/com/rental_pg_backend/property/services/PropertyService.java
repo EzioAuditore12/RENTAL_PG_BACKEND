@@ -106,6 +106,11 @@ public class PropertyService {
 
     }
 
+    public Page<PropertyDto> getManagedProperties(UUID managerId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return propertyRepository.findAllByManagerId(managerId, pageable).map(propertyMapper::toDto);
+    }
+
     private InsertLocationDto buildLocation(CreatePropertyDto createPropertyDto,
                                             NominatimApiResponseDto nominatimApiResponseDto) {
 
