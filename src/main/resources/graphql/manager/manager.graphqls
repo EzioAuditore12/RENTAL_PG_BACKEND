@@ -5,6 +5,7 @@ type Manager {
   avatar: String
   createdAt: LocalDateTime
   managedProperties: [Property]
+  managedPropertiesCount: Int
 }
 
 extend type Query {

@@ -23,4 +23,7 @@ public interface ManagerRepository extends JpaRepository<Manager, UUID> {
 
     @Query("SELECT p.id FROM Property p WHERE p.manager.id = :managerId")
     Set<UUID> findManagedPropertyIdsByManagerId(@Param("managerId") UUID managerId);
+
+    @Query("SELECT COUNT(p) FROM Property p WHERE p.manager.id = :managerId")
+    long countManagedPropertiesByManagerId(@Param("managerId") UUID managerId);
 }

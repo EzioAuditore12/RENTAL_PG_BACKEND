@@ -69,4 +69,7 @@ public class ManagerService {
         return managerRepository.findManagedPropertyIdsByManagerId(managerId);
     }
 
+    public long getManagedPropertiesCount(UUID managerId) {
+        return managerRepository.countManagedPropertiesByManagerId(managerId);
+    }
 }

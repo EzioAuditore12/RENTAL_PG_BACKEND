@@ -87,4 +87,9 @@ public class ManagerResolver {
 
     }
 
+    @SchemaMapping(typeName = "Manager", field = "managedPropertiesCount")
+    public Integer getManagedPropertiesCount(ManagerPublicDto managerPublicDto) {
+        return (int) managerService.getManagedPropertiesCount(managerPublicDto.getId());
+    }
+
 }

@@ -11,4 +11,5 @@ import com.rental_pg_backend.property.entities.Property;
 public interface PropertyRepository extends JpaRepository<Property, UUID>, JpaSpecificationExecutor<Property> {
 
     List<Property> findAllByManagerId(UUID managerId);
+    long countByManagerId(UUID managerId);
 }
