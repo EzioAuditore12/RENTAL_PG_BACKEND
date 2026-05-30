@@ -20,7 +20,20 @@ public class NominatimUtils {
     private static final String USER_AGENT = "RealEstateApp (realEstate@gmail.com)";
 
     public static NominatimApiResponseDto getGeoLocationDetails(NominatimSearchLocationDto nominatimSearchLocationDto) {
+        // Try structured search first
         String url = nomantimGeoCodingUrl(nominatimSearchLocationDto);
+        NominatimApiResponseDto result = executeSearch(url);
+
+        if (result != null) {
+            return result;
+        }
+
+        // Fallback: free-text search (works better for many Indian cities like Noida)
+        String fallbackUrl = nominatimFreeTextSearchUrl(nominatimSearchLocationDto);
+        return executeSearch(fallbackUrl);
+    }
+
+    private static NominatimApiResponseDto executeSearch(String url) {
         HttpEntity<String> entity = buildNominatimHeaders();
         RestTemplate restTemplate = new RestTemplate();
 
@@ -55,12 +68,51 @@ public class NominatimUtils {
     }
 
     private static String nomantimGeoCodingUrl(NominatimSearchLocationDto nominatimSearchLocationDto) {
+        UriComponentsBuilder builder = UriComponentsBuilder.newInstance()
+                .scheme("https")
+                .host("nominatim.openstreetmap.org")
+                .path("/search");
+
+        if (nominatimSearchLocationDto.getStreet() != null && !nominatimSearchLocationDto.getStreet().isEmpty()) {
+            builder.queryParam("street", nominatimSearchLocationDto.getStreet());
+        }
+        if (nominatimSearchLocationDto.getCity() != null && !nominatimSearchLocationDto.getCity().isEmpty()) {
+            builder.queryParam("city", nominatimSearchLocationDto.getCity());
+        }
+        if (nominatimSearchLocationDto.getState() != null && !nominatimSearchLocationDto.getState().isEmpty()) {
+            builder.queryParam("state", nominatimSearchLocationDto.getState());
+        }
+        if (nominatimSearchLocationDto.getCountry() != null && !nominatimSearchLocationDto.getCountry().isEmpty()) {
+            builder.queryParam("country", nominatimSearchLocationDto.getCountry());
+        }
+        if (nominatimSearchLocationDto.getPostalCode() != null && !nominatimSearchLocationDto.getPostalCode().isEmpty()) {
+            builder.queryParam("postalcode", nominatimSearchLocationDto.getPostalCode());
+        }
+
+        return builder.queryParam("format", "json")
+                .queryParam("limit", 1)
+                .toUriString();
+    }
+
+    private static String nominatimFreeTextSearchUrl(NominatimSearchLocationDto dto) {
+        StringBuilder queryBuilder = new StringBuilder();
+        if (dto.getCity() != null && !dto.getCity().isEmpty()) {
+            queryBuilder.append(dto.getCity());
+        }
+        if (dto.getState() != null && !dto.getState().isEmpty()) {
+            if (queryBuilder.length() > 0) queryBuilder.append(", ");
+            queryBuilder.append(dto.getState());
+        }
+        if (dto.getCountry() != null && !dto.getCountry().isEmpty()) {
+            if (queryBuilder.length() > 0) queryBuilder.append(", ");
+            queryBuilder.append(dto.getCountry());
+        }
+
         return UriComponentsBuilder.newInstance()
                 .scheme("https")
                 .host("nominatim.openstreetmap.org")
                 .path("/search")
-                .queryParam("country", nominatimSearchLocationDto.getCountry())
-                .queryParam("postalcode", nominatimSearchLocationDto.getPostalCode())
+                .queryParam("q", queryBuilder.toString())
                 .queryParam("format", "json")
                 .queryParam("limit", 1)
                 .toUriString();

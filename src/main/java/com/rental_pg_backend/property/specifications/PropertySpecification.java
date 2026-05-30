@@ -45,8 +45,8 @@ public class PropertySpecification {
         }
 
         if (dto.getCity() != null && !dto.getCity().trim().isEmpty()) {
-            predicates.add(criteriaBuilder.equal(criteriaBuilder.lower(root.get(LOCATION).get("city")),
-                    dto.getCity().toLowerCase()));
+            predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get(LOCATION).get("city")),
+                    "%" + dto.getCity().toLowerCase() + "%"));
         }
 
         if (dto.getState() != null && !dto.getState().trim().isEmpty()) {

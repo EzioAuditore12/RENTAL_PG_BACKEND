@@ -19,6 +19,14 @@ public class LocationData {
     @JsonPropertyDescription("The state mentioned by the user, e.g., Uttarakhand")
     private String state;
 
+    @JsonProperty(required = false)
+    @JsonPropertyDescription("The country mentioned by the user. If not mentioned, default to 'India'")
+    private String country = "India";
+
+    @JsonProperty(required = false)
+    @JsonPropertyDescription("The specific street, neighborhood, area or landmark mentioned by the user, e.g., Rajpur Road")
+    private String street;
+
     @JsonProperty(required = true)
     @JsonPropertyDescription("""
             Search radius.
@@ -26,4 +34,8 @@ public class LocationData {
             always return '5km'.
             """)
     private String radius = "5km";
+
+    private Double longitude;
+
+    private Double latitude;
 }

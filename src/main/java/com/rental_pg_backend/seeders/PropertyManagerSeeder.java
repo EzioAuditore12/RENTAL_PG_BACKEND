@@ -8,9 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rental_pg_backend.property.dto.location.InsertLocationDto;
 import com.rental_pg_backend.property.dto.location.LocationDto;
 import com.rental_pg_backend.property.entities.Location;
-import com.rental_pg_backend.property.repositories.LocationRepository;
 import com.rental_pg_backend.property.services.LocationService;
-import com.rental_pg_backend.property.services.PropertyService;
 import com.rental_pg_backend.seeders.dto.SeederPlaceDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,10 +33,8 @@ import lombok.RequiredArgsConstructor;
 public class PropertyManagerSeeder implements CommandLineRunner {
 
     private final ManagerRepository managerRepository;
-    private final PropertyService propertyService;
     private final PropertyRepository propertyRepository;
     private final LocationService locationService;
-    private final LocationRepository locationRepository;
 
     // Self-injection to allow Spring to proxy our batch transaction calls
     @Autowired
